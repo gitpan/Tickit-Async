@@ -1,0 +1,13 @@
+Build.PL
+Changes
+lib/Tickit/Async.pm
+MANIFEST			This list of files
+t/00use.t
+t/01tickit-async.t
+t/02tickit-async-input.t
+t/99pod.t
+Makefile.PL
+README
+LICENSE
+META.yml
+META.json

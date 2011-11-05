@@ -1,5 +1,5 @@
 NAME
-    "Tickit::Async" - use "Tickit" with "IO::Async"
+    `Tickit::Async' - use `Tickit' with `IO::Async'
 
 SYNOPSIS
      use IO::Async;
@@ -19,13 +19,13 @@ SYNOPSIS
 
 DESCRIPTION
     This class allows a Tickit user interface to run alongside other
-    IO::Async-driven code, using "IO::Async" as a source of IO events.
+    IO::Async-driven code, using `IO::Async' as a source of IO events.
 
-    As a shortcut convenience, if the "run" method is invoked and the object
+    As a shortcut convenience, if the `run' method is invoked and the object
     is not yet a member of an IO::Async::Loop, then a new one will be
-    constructed and the "Tickit::Async" object added to it. This will allow
-    a "Tickit::Async" object to be used without being aware it is not a
-    simple "Tickit" object.
+    constructed and the `Tickit::Async' object added to it. This will allow
+    a `Tickit::Async' object to be used without being aware it is not a
+    simple `Tickit' object.
 
 AUTHOR
     Paul Evans <leonerd@leonerd.org.uk>

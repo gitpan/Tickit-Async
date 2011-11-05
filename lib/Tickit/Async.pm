@@ -10,7 +10,7 @@ use warnings;
 use base qw( Tickit IO::Async::Notifier );
 IO::Async::Notifier->VERSION( '0.43' ); # Need support for being a nonprinciple mixin
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 use IO::Async::Loop;
 use IO::Async::Signal;
@@ -145,8 +145,20 @@ sub run
       die @_;
    };
 
+   $loop->add( my $sigint_notifier = IO::Async::Signal->new(
+      name => "INT",
+      on_receipt => $self->_capture_weakself( sub {
+            my $self = shift;
+            if(my $loop = $self->get_loop) {
+               $loop->loop_stop
+            }
+         }),
+   ) );
+
    $loop->loop_forever;
+
    $self->stop;
+   $loop->remove( $sigint_notifier );
 }
 
 =head1 AUTHOR

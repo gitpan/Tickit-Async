@@ -1,5 +1,8 @@
 Revision history for Tickit-Async
 
+0.12    CHANGES:
+         * Updated for Tickit 0.14 and IO::Async 0.47
+
 0.11    BUGFIXES:
          * Handle SIGINT to terminate gracefully, restoring terminal state
 

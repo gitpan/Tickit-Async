@@ -6,12 +6,11 @@ use Module::Build;
 my $build = Module::Build->new(
    module_name => 'Tickit::Async',
    requires => {
-      'IO::Async' => '0.29',
+      'IO::Async' => '0.47',
       'IO::Async::Notifier' => '0.43',
       'IO::Async::Stream' => '0.34',
       'IO::Async::Test' => 0,
-      'Term::TermKey::Async' => 0,
-      'Tickit' => '0.09',
+      'Tickit' => '0.14',
    },
    build_requires => {
       'Test::HexString' => 0,

@@ -1,21 +1,23 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2012 -- leonerd@leonerd.org.uk
 
 package Tickit::Async;
 
 use strict;
 use warnings;
 use base qw( Tickit IO::Async::Notifier );
+Tickit->VERSION( '0.14' );
 IO::Async::Notifier->VERSION( '0.43' ); # Need support for being a nonprinciple mixin
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
-use IO::Async::Loop;
+use IO::Async::Loop 0.47; # ->run and ->stop methods
 use IO::Async::Signal;
 use IO::Async::Stream;
-use Term::TermKey::Async;
+use IO::Async::Handle;
+use IO::Async::Timer::Countdown;
 
 =head1 NAME
 
@@ -61,21 +63,16 @@ sub new
       on_receipt => $self->_capture_weakself( "_SIGWINCH" ),
    ) );
 
+   $self->add_child( IO::Async::Handle->new(
+      read_handle => $self->term->get_input_handle,
+      on_read_ready => $self->_capture_weakself( "_input_readready" ),
+   ) );
+
+   $self->add_child( $self->{timer} = IO::Async::Timer::Countdown->new(
+      on_expire => $self->_capture_weakself( "_timeout" ),
+   ) );
+
    return $self;
-}
-
-sub _make_termkey
-{
-   my $self = shift;
-   my ( $in ) = @_;
-
-   my $tka = Term::TermKey::Async->new(
-      term => $in,
-      on_key => $self->_capture_weakself( "_KEY" ),
-   );
-   $self->add_child( $tka );
-
-   return $tka;
 }
 
 sub _make_writer
@@ -91,6 +88,29 @@ sub _make_writer
    $self->add_child( $writer );
 
    return $writer;
+}
+
+sub _input_readready
+{
+   my $self = shift;
+   my $term = $self->term;
+
+   $self->{timer}->stop;
+
+   $term->input_readable;
+
+   $self->_timeout;
+}
+
+sub _timeout
+{
+   my $self = shift;
+   my $term = $self->term;
+
+   if( defined( my $timeout = $term->check_timeout ) ) {
+      $self->{timer}->configure( delay => $timeout / 1000 ); # msec
+      $self->{timer}->start;
+   }
 }
 
 sub _add_to_loop
@@ -120,7 +140,7 @@ sub later
 sub _STOP
 {
    my $self = shift;
-   $self->get_loop->loop_stop;
+   $self->get_loop->stop;
 }
 
 sub run
@@ -133,7 +153,7 @@ sub run
       $newloop;
    };
 
-   $self->start;
+   $self->setup_term;
 
    my $old_DIE = $SIG{__DIE__};
    local $SIG{__DIE__} = sub {
@@ -150,14 +170,14 @@ sub run
       on_receipt => $self->_capture_weakself( sub {
             my $self = shift;
             if(my $loop = $self->get_loop) {
-               $loop->loop_stop
+               $loop->stop
             }
          }),
    ) );
 
-   $loop->loop_forever;
+   $loop->run;
 
-   $self->stop;
+   $self->teardown_term;
    $loop->remove( $sigint_notifier );
 }
 

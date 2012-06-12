@@ -23,6 +23,7 @@ testing_loop( $loop );
 my ( $my_rd, $term_wr ) = $loop->pipepair or die "Cannot pipepair - $!";
 
 my $tickit = Tickit::Async->new(
+   UTF8     => 1,
    term_out => $term_wr,
 );
 

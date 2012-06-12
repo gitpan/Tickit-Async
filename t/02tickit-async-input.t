@@ -11,7 +11,7 @@ BEGIN {
    $ENV{TERM} = "xterm";
 }
 
-use Test::More tests => 8;
+use Test::More tests => 5;
 use IO::Async::Test;
 
 use IO::Async::Loop;
@@ -24,6 +24,7 @@ testing_loop( $loop );
 my ( $term_rd, $my_wr ) = $loop->pipepair or die "Cannot pipepair - $!";
 
 my $tickit = Tickit::Async->new(
+   UTF8     => 1,
    term_in  => $term_rd,
 );
 
@@ -37,9 +38,8 @@ $loop->add( $tickit );
 
    no warnings 'redefine';
    local *Tickit::on_key = sub {
-      my ( $self, $type, $str, $key ) = @_;
+      my ( $self, $type, $str ) = @_;
       push @key_events, [ $type => $str ];
-      isa_ok( $key, "Term::TermKey::Key", '$key' );
    };
    local *Tickit::on_mouse = sub {
       my ( $self, $ev, $button, $line, $col ) = @_;

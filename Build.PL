@@ -10,7 +10,7 @@ my $build = Module::Build->new(
       'IO::Async::Notifier' => '0.43',
       'IO::Async::Stream' => '0.34',
       'IO::Async::Test' => 0,
-      'Tickit' => '0.14',
+      'Tickit' => '0.17',
    },
    build_requires => {
       'Test::HexString' => 0,

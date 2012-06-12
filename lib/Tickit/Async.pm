@@ -8,10 +8,10 @@ package Tickit::Async;
 use strict;
 use warnings;
 use base qw( Tickit IO::Async::Notifier );
-Tickit->VERSION( '0.14' );
+Tickit->VERSION( '0.17' );
 IO::Async::Notifier->VERSION( '0.43' ); # Need support for being a nonprinciple mixin
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 use IO::Async::Loop 0.47; # ->run and ->stop methods
 use IO::Async::Signal;
@@ -120,7 +120,10 @@ sub _add_to_loop
    $self->SUPER::_add_to_loop( @_ );
 
    if( $self->{todo_queue} ) {
-      $self->get_loop->later( sub { $self->_flush_later } );
+      $self->get_loop->later( $self->_capture_weakself( sub {
+         my $self = shift or return;
+         $self->_flush_later
+      } ) );
    }
 }
 
@@ -137,7 +140,7 @@ sub later
    }
 }
 
-sub _STOP
+sub stop
 {
    my $self = shift;
    $self->get_loop->stop;
@@ -161,7 +164,7 @@ sub run
 
       die @_ if $^S;
 
-      $self->stop;
+      $self->teardown_term;
       die @_;
    };
 
@@ -175,10 +178,18 @@ sub run
          }),
    ) );
 
-   $loop->run;
+   my $ret = eval { $loop->run };
+   my $e = $@;
 
-   $self->teardown_term;
-   $loop->remove( $sigint_notifier );
+   {
+      local $@;
+
+      $self->teardown_term;
+      $loop->remove( $sigint_notifier );
+   }
+
+   die $@ if $@;
+   return $ret;
 }
 
 =head1 AUTHOR

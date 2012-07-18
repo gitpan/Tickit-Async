@@ -1,5 +1,9 @@
 Revision history for Tickit-Async
 
+0.14    CHANGES:
+         * Updated for Tickit 0.18
+           + added required $term->flush to unit tests
+
 0.13    CHANGES:
          * Updated for Tickit 0.17
          * Use a weasel for CODEref that flushes initial output events

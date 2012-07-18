@@ -53,6 +53,7 @@ sub stream_is
 }
 
 $term->print( "Hello" );
+$term->flush;
 
 $stream = "";
 stream_is( "Hello", '$term->print' );
@@ -64,6 +65,8 @@ stream_is( "Hello", '$term->print' );
 #  UTF-8: 0xc4 0x89
 
 $term->print( "\x{109}" );
+$term->flush;
+
 $stream = "";
 stream_is( "\xc4\x89", 'print outputs UTF-8' );
 

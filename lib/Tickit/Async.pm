@@ -11,7 +11,7 @@ use base qw( Tickit IO::Async::Notifier );
 Tickit->VERSION( '0.17' );
 IO::Async::Notifier->VERSION( '0.43' ); # Need support for being a nonprinciple mixin
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 use IO::Async::Loop 0.47; # ->run and ->stop methods
 use IO::Async::Signal;
@@ -157,16 +157,6 @@ sub run
    };
 
    $self->setup_term;
-
-   my $old_DIE = $SIG{__DIE__};
-   local $SIG{__DIE__} = sub {
-      local $SIG{__DIE__} = $old_DIE;
-
-      die @_ if $^S;
-
-      $self->teardown_term;
-      die @_;
-   };
 
    $loop->add( my $sigint_notifier = IO::Async::Signal->new(
       name => "INT",

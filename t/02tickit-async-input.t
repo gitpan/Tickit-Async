@@ -11,7 +11,7 @@ BEGIN {
    $ENV{TERM} = "xterm";
 }
 
-use Test::More tests => 5;
+use Test::More tests => 7;
 use IO::Async::Test;
 
 use IO::Async::Loop;
@@ -59,6 +59,23 @@ $loop->add( $tickit );
    wait_for { @key_events };
 
    is_deeply( \@key_events, [ [ key => "C-a" ] ], 'on_key Ctrl-A' );
+
+   $my_wr->syswrite( "\eX" );
+
+   undef @key_events;
+   wait_for { @key_events };
+
+   is_deeply( \@key_events, [ [ key => "M-X" ] ], 'on_key Alt-X' );
+
+   $my_wr->syswrite( "\e" );
+   # 10msec should be enough for us to have to wait but short enough for
+   # libtermkey to consider this
+   $loop->watch_time( after => 0.010, code => sub { $my_wr->syswrite( "Y" ) } );
+
+   undef @key_events;
+   wait_for { @key_events };
+
+   is_deeply( \@key_events, [ [ key => "M-Y" ] ], 'on_key Alt-Y split write' );
 
    # We'll test with a Unicode character outside of Latin-1, to ensure it
    # roundtrips correctly

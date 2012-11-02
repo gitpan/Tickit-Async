@@ -1,5 +1,6 @@
 Build.PL
 Changes
+examples/demo-timer.pl
 examples/testonewidget.pl
 lib/Tickit/Async.pm
 LICENSE

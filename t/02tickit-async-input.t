@@ -22,10 +22,12 @@ my $loop = IO::Async::Loop->new();
 testing_loop( $loop );
 
 my ( $term_rd, $my_wr ) = $loop->pipepair or die "Cannot pipepair - $!";
+open my $term_wr, ">", \my $output;
 
 my $tickit = Tickit::Async->new(
    UTF8     => 1,
    term_in  => $term_rd,
+   term_out => $term_wr,
 );
 
 $loop->add( $tickit );

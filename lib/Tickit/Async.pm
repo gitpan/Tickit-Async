@@ -11,7 +11,7 @@ use base qw( Tickit IO::Async::Notifier );
 Tickit->VERSION( '0.17' );
 IO::Async::Notifier->VERSION( '0.43' ); # Need support for being a nonprinciple mixin
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 use IO::Async::Loop 0.47; # ->run and ->stop methods
 use IO::Async::Signal;

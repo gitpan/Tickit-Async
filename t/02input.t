@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
+use warnings;
 
 # We need a UTF-8 locale to force libtermkey into UTF-8 handling, even if the
 # system locale is not
@@ -11,17 +12,17 @@ BEGIN {
    $ENV{TERM} = "xterm";
 }
 
-use Test::More tests => 7;
+use Test::More;
 use IO::Async::Test;
-
 use IO::Async::Loop;
+use IO::Async::OS;
 
 use Tickit::Async;
 
 my $loop = IO::Async::Loop->new();
 testing_loop( $loop );
 
-my ( $term_rd, $my_wr ) = $loop->pipepair or die "Cannot pipepair - $!";
+my ( $term_rd, $my_wr ) = IO::Async::OS->pipepair or die "Cannot pipepair - $!";
 open my $term_wr, ">", \my $output;
 
 my $tickit = Tickit::Async->new(
@@ -34,7 +35,6 @@ $loop->add( $tickit );
 
 {
    my @key_events;
-   my @mouse_events;
 
    # We can't get at the key/mouse events easily from outside, so we'll hack it
 
@@ -42,10 +42,6 @@ $loop->add( $tickit );
    local *Tickit::on_key = sub {
       my ( $self, $type, $str ) = @_;
       push @key_events, [ $type => $str ];
-   };
-   local *Tickit::on_mouse = sub {
-      my ( $self, $ev, $button, $line, $col ) = @_;
-      push @mouse_events, [ $ev => $button, $line, $col ];
    };
 
    $my_wr->syswrite( "h" );
@@ -91,6 +87,16 @@ $loop->add( $tickit );
    wait_for { @key_events };
 
    is_deeply( \@key_events, [ [ text => "\x{109}" ] ], 'on_key reads UTF-8' );
+}
+
+{
+   my @mouse_events;
+
+   no warnings 'redefine';
+   local *Tickit::on_mouse = sub {
+      my ( $self, $ev, $button, $line, $col ) = @_;
+      push @mouse_events, [ $ev => $button, $line, $col ];
+   };
 
    # Mouse encoding == CSI M $b $x $y
    # where $b, $l, $c are encoded as chr(32+$). Position is 1-based
@@ -103,13 +109,17 @@ $loop->add( $tickit );
    is_deeply( \@mouse_events, [ [ press => 1, 10, 20 ] ], 'on_mouse press(1) @20,10' );
 }
 
-my $got_Ctrl_A;
-$tickit->bind_key( "C-a" => sub { $got_Ctrl_A++ } );
+{
+   my $got_Ctrl_A;
+   $tickit->bind_key( "C-a" => sub { $got_Ctrl_A++ } );
 
-$my_wr->syswrite( "\cA" );
+   $my_wr->syswrite( "\cA" );
 
-wait_for { $got_Ctrl_A };
+   wait_for { $got_Ctrl_A };
 
-is( $got_Ctrl_A, 1, 'bind Ctrl-A' );
+   is( $got_Ctrl_A, 1, 'bind Ctrl-A' );
+}
 
 $loop->remove( $tickit );
+
+done_testing;

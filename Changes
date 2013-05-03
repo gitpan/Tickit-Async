@@ -1,5 +1,10 @@
 Revision history for Tickit-Async
 
+0.17    BUGFIXES:
+         * Use IO::Async::OS->pipepair now it's not on $loop in unit tests
+         * Use new 'linetype' style attribute to Tickit::Widget::Frame in
+           example
+
 0.16    BUGFIXES:
          * Provide Tickit::Term with a real output handle to avoid breaking
            tests with the DECVSSM probe sequence

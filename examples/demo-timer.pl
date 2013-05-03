@@ -22,7 +22,7 @@ $vbox->add( Tickit::Widget::Frame->new(
          align  => "centre",
          valign => "middle",
       ),
-      style => "single",
+      style => { linetype => "single" },
 ) );
 
 my $fg = 1;

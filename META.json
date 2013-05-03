@@ -17,7 +17,7 @@
       "build" : {
          "requires" : {
             "Test::HexString" : "0",
-            "Test::More" : "0",
+            "Test::More" : "0.88",
             "Test::Refcount" : "0"
          }
       },
@@ -34,7 +34,7 @@
    "provides" : {
       "Tickit::Async" : {
          "file" : "lib/Tickit/Async.pm",
-         "version" : "0.16"
+         "version" : "0.17"
       }
    },
    "release_status" : "stable",
@@ -43,5 +43,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.16"
+   "version" : "0.17"
 }

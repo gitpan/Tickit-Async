@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2012 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2013 -- leonerd@leonerd.org.uk
 
 package Tickit::Async;
 
@@ -11,7 +11,7 @@ use base qw( Tickit IO::Async::Notifier );
 Tickit->VERSION( '0.17' );
 IO::Async::Notifier->VERSION( '0.43' ); # Need support for being a nonprinciple mixin
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 use IO::Async::Loop 0.47; # ->run and ->stop methods
 use IO::Async::Signal;
@@ -45,11 +45,14 @@ C<Tickit::Async> - use C<Tickit> with C<IO::Async>
 This class allows a L<Tickit> user interface to run alongside other
 L<IO::Async>-driven code, using C<IO::Async> as a source of IO events.
 
-As a shortcut convenience, if the C<run> method is invoked and the object is
-not yet a member of an L<IO::Async::Loop>, then a new one will be constructed
-and the C<Tickit::Async> object added to it. This will allow a
-C<Tickit::Async> object to be used without being aware it is not a simple
-C<Tickit> object.
+As a shortcut convenience, a containing L<IO::Async::Loop> will be constructed
+using the default magic constructor the first time it is needed, if the object
+is not already a member of a loop. This will allow a C<Tickit::Async> object
+to be used without being aware it is not a simple C<Tickit> object.
+
+To avoid accidentally creating multiple loops, callers should be careful to
+C<add> the C<Tickit::Async> object to the main application's loop if one
+already exists as soon as possible after construction.
 
 =cut
 
@@ -73,6 +76,16 @@ sub new
    ) );
 
    return $self;
+}
+
+sub get_loop
+{
+   my $self = shift;
+   return $self->SUPER::get_loop || do {
+      my $newloop = IO::Async::Loop->new;
+      $newloop->add( $self );
+      $newloop;
+   };
 }
 
 sub _make_writer
@@ -113,31 +126,20 @@ sub _timeout
    }
 }
 
-sub _add_to_loop
-{
-   my $self = shift;
-
-   $self->SUPER::_add_to_loop( @_ );
-
-   if( $self->{todo_queue} ) {
-      $self->get_loop->later( $self->_capture_weakself( sub {
-         my $self = shift or return;
-         $self->_flush_later
-      } ) );
-   }
-}
-
 sub later
 {
    my $self = shift;
    my ( $code ) = @_;
 
-   if( my $loop = $self->get_loop ) {
-      $loop->later( $code );
-   }
-   else {
-      push @{ $self->{todo_queue} }, $code;
-   }
+   $self->get_loop->later( $code );
+}
+
+sub timer
+{
+   my $self = shift;
+   my ( $mode, $amount, $code ) = @_;
+
+   $self->get_loop->watch_time( $mode => $amount, code => $code );
 }
 
 sub stop
@@ -150,11 +152,7 @@ sub run
 {
    my $self = shift;
 
-   my $loop = $self->get_loop || do {
-      my $newloop = IO::Async::Loop->new;
-      $newloop->add( $self );
-      $newloop;
-   };
+   my $loop = $self->get_loop;
 
    $self->setup_term;
 
@@ -162,7 +160,7 @@ sub run
       name => "INT",
       on_receipt => $self->_capture_weakself( sub {
             my $self = shift;
-            if(my $loop = $self->get_loop) {
+            if( my $loop = $self->get_loop ) {
                $loop->stop
             }
          }),

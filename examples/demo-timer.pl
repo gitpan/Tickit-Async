@@ -12,7 +12,7 @@ use Tickit::Widget::Static;
 use Tickit::Widget::VBox;
 use Tickit::Widget::Frame;
 
-my $loop = IO::Async::Loop->new;
+my $tickit = Tickit::Async->new;
 
 my $vbox = Tickit::Widget::VBox->new( spacing => 1 );
 
@@ -26,17 +26,15 @@ $vbox->add( Tickit::Widget::Frame->new(
 ) );
 
 my $fg = 1;
-$loop->add( IO::Async::Timer::Periodic->new(
-      interval => 0.5,
-      on_tick => sub {
-         $fg++;
-         $fg = 1 if $fg > 7;
-         $static->pen->chattr( fg => $fg );
-      },
-)->start );
+sub tick
+{
+   $fg++;
+   $fg = 1 if $fg > 7;
+   $static->pen->chattr( fg => $fg );
 
-my $tickit = Tickit::Async->new;
-$loop->add( $tickit );
+   $tickit->timer( after => 0.5, \&tick );
+}
+tick();
 
 $tickit->set_root_widget( $vbox );
 
